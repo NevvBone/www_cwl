@@ -1,40 +1,46 @@
 ```python
-from blog.models import Category, Post, Topic
-from blog.serializers import CategorySerializer, PostSerializer
+from posts.models import Category, Topic, Post
+from posts.serializers import CategorySerializer, TopicSerializer, PostSerializer
+from django.contrib.auth.models import User
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 import io
 
 category = Category.objects.create(name="Tech", description="Technology news")
-topic = Topic.objects.create(name="Mechanism", category=category)
 
-serializer1 = CategorySerializer(cat)
-print("CategorySerializer.data:", serializer.data) 
+serializer = CategorySerializer(category)
+print("Serialized Category:", serializer.data)
 
-serializer2 = TopicSerializer(topic)
-print(serializer2.data)
-
-json_content = JSONRenderer().render(serializer.data)
-print("JSON:", json_content)
-
-stream = io.BytesIO(json_content)
+json_bytes = JSONRenderer().render(serializer.data)
+print("JSON:", json_bytes)
+stream = io.BytesIO(json_bytes)
 data = JSONParser().parse(stream)
-
 
 deserializer = CategorySerializer(data=data)
 print("is_valid():", deserializer.is_valid())
 print("validated_data:", deserializer.validated_data)
-data['topic_id'] = topic.id  
-data['created_by_id'] = user.id
 
-deserializer = PostSerializer(data=data)
+topic = Topic.objects.create(name="Mechanisms", category=category)
+topic_serializer = TopicSerializer(topic)
+print("Serialized Topic:", topic_serializer.data)
 
-if deserializer.is_valid():  
-   new_post = deserializer.save()  
-   print('Saved without errors')  
-   print(PostSerializer(new_post).data)  
-else:  
-   print('Errors:')  
-   print(deserializer.errors)
+user = User.objects.first()
+
+post_data = {
+    "title": "Mechanics of AI",
+    "text": "This post explains mechanisms...",
+    "slug": "mechanics-of-ai",
+    "topic_id": topic.id,
+    "created_by_id": user.id,
+}
+
+post_serializer = PostSerializer(data=post_data)
+
+print("Post valid?:", post_serializer.is_valid())
+print("Post errors:", post_serializer.errors)
+
+if post_serializer.is_valid():
+    new_post = post_serializer.save()
+    print("Saved Post:", PostSerializer(new_post).data)
 ```
 
