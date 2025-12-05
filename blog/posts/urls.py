@@ -1,4 +1,5 @@
 from django.urls import path
+from .api_views import  category_secure_detail, CategoryPermissionView
 from rest_framework.authtoken.views import obtain_auth_token
 from . import api_views as views
 
@@ -16,4 +17,6 @@ urlpatterns = [
     path('users/posts/', views.user_posts, name='user_posts'),
     path('posts/<int:pk>/update/', views.post_update, name='post_update'),
     path('posts/<int:pk>/delete/', views.post_delete, name='post_delete'),
+    path('categories-secure/<int:pk>/', category_secure_detail),
+    path("categories-perm/<int:pk>/", CategoryPermissionView.as_view()),
 ]

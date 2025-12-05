@@ -25,8 +25,6 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
 ]
 
-]
-
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns += [

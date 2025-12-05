@@ -39,6 +39,9 @@ class Post(models.Model):
     class Meta:
         ordering = ['-created_at']
         verbose_name_plural = 'Posts'
+        permissions = [
+            ('can_edit_others_posts', 'Can edit posts created by other users'),
+        ]
 
     def __str__(self):
         words = (self.text or "").split()

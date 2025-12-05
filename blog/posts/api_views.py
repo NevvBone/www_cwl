@@ -1,10 +1,13 @@
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from .models import Category, Topic, Post
 from .serializers import CategorySerializer, TopicSerializer, PostSerializer
+from django.core.exceptions import PermissionDenied
+from rest_framework.views import APIView
+from .permissions import CustomDjangoModelPermissions
 
 
 @api_view(['GET', 'POST'])
@@ -139,14 +142,21 @@ def post_update(request, pk):
     try:
         post = Post.objects.get(pk=pk)
     except Post.DoesNotExist:
-        return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Not found'}, status=404)
+
+    if post.created_by != request.user:
+        if not request.user.has_perm('posts.can_edit_others_posts'):
+            return Response(
+                {'error': 'Nie masz uprawnień do edycji cudzych postów.'},
+                status=403
+            )
 
     serializer = PostSerializer(post, data=request.data)
     if serializer.is_valid():
         serializer.save(created_by=post.created_by)
         return Response(serializer.data)
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=400)
 
 
 @api_view(['DELETE'])
@@ -179,3 +189,45 @@ def category_search(request, name):
 def topic_search(request, name):
     qs = Topic.objects.filter(name__icontains=name)
     return Response(TopicSerializer(qs, many=True).data)
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def category_secure_detail(request, pk):
+    if not request.user.has_perm('posts.view_category'):
+        raise PermissionDenied("Nie masz uprawnienia do przeglądania kategorii.")
+
+    try:
+        category = Category.objects.get(pk=pk)
+    except Category.DoesNotExist:
+        return Response({'error': 'Not found'}, status=404)
+
+    return Response(CategorySerializer(category).data)
+
+
+class CategoryPermissionView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [CustomDjangoModelPermissions]
+
+    def get_queryset(self):
+        return Category.objects.all()
+
+    def get_object(self, pk):
+        return Category.objects.get(pk=pk)
+
+    def get(self, request, pk):
+        category = self.get_object(pk)
+        return Response(CategorySerializer(category).data)
+
+    def put(self, request, pk):
+        category = self.get_object(pk)
+        serializer = CategorySerializer(category, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def delete(self, request, pk):
+        category = self.get_object(pk)
+        category.delete()
+        return Response(status=204)
