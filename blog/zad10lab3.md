@@ -1,12 +1,12 @@
 - punkt 1  
- `Category.objects.all()\`  
+ `Category.objects.all()`  
 - punkt 2  
- `Category.objects.get(id=3)\`  
+ `Category.objects.get(id=3)`  
 - punkt 3  
- `Category.objects.filter(name\_\_startswith='N')\`  
+ `Category.objects.filter(name__startswith='N')`  
 - punkt 4  
- `Topic.objects.values\_list('category\_\_name', flat=True).distinct()\`  
+ `Topic.objects.values_list('category__name', flat=True).distinct()`  
 - punkt 5  
- `Post.objects.order\_by('-title').values\_list('title', flat=True)\`  
+ `Post.objects.order_by('-title').values_list('title', flat=True)`  
 - punkt 6  
- `Category.objects.create(name='Source')\`  
+ `Category.objects.create(name='Source')`  
